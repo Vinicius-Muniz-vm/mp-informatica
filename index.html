@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MP Informática — Manutenção de Computadores e Notebooks</title>
+    
+    <!-- Premium Typographies (Aggressive Tech Style) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              background: '#040405', // Deep space black
+              foreground: '#FFFFFF', // Pure White text
+              cmPurple: '#8a2be2', // Cooler Master style purple
+              cmCyan: '#00f0ff',   // Cyberpunk cyan
+              card: 'rgba(20, 20, 22, 0.7)',
+              border: 'rgba(255, 255, 255, 0.1)',
+            },
+            fontFamily: {
+              sans: ['"Space Grotesk"', 'sans-serif'],
+              mono: ['"JetBrains Mono"', 'monospace'],
+            }
+          }
+        }
+      }
+    </script>
+    
+    <style type="text/tailwindcss">
+      @layer base {
+        body {
+          background-color: theme('colors.background');
+          color: theme('colors.foreground');
+          -webkit-font-smoothing: antialiased;
+        }
+        ::selection {
+          background-color: theme('colors.cmCyan');
+          color: black;
+        }
+      }
+
+      /* Cooler Master / Gamer Glass Styles */
+      .cm-glass {
+        background: rgba(10, 10, 12, 0.6);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-shadow: 0 30px 60px -15px rgba(0,0,0,1);
+      }
+      
+      .cm-glass:hover {
+        border-color: rgba(0, 240, 255, 0.3);
+        box-shadow: 0 0 40px -10px rgba(0, 240, 255, 0.15);
+      }
+
+      .text-glow {
+        text-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+      }
+      
+      .gradient-heading {
+        background: linear-gradient(to right, theme('colors.cmCyan'), theme('colors.cmPurple'));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      /* Custom Scrollbar for dark theme */
+      ::-webkit-scrollbar { width: 10px; }
+      ::-webkit-scrollbar-track { background: #040405; }
+      ::-webkit-scrollbar-thumb { background: #333; border-radius: 5px; }
+      ::-webkit-scrollbar-thumb:hover { background: #00f0ff; }
+    </style>
+
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  </head>
+  <body class="font-sans overflow-x-hidden">
+    <div id="root"></div>
+
+    <script type="text/babel">
+const { useState, useEffect, useRef } = React;
+const { motion, useMotionValue, useSpring } = window.Motion;
+
+const SPRING_CFG = { type: "spring", stiffness: 100, damping: 20 };
+
+function CMAccentButton({ children, onClick, className = "", outline = false, type = "button" }) {
+  const ref = useRef(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const springX = useSpring(x, { damping: 15, stiffness: 150, mass: 0.1 });
+  const springY = useSpring(y, { damping: 15, stiffness: 150, mass: 0.1 });
+
+  const handleMouseMove = (e) => {
+    const rect = ref.current.getBoundingClientRect();
+    x.set((e.clientX - rect.left - rect.width / 2) * 0.2);
+    y.set((e.clientY - rect.top - rect.height / 2) * 0.2);
+  };
+  const handleMouseLeave = () => { x.set(0); y.set(0); };
+
+  const baseStyle = "relative px-8 py-4 font-bold flex items-center justify-center gap-2 overflow-hidden transition-all duration-300 rounded-lg uppercase tracking-wider text-sm";
+  const colorStyle = outline 
+    ? "border border-cmCyan text-cmCyan hover:bg-cmCyan hover:text-black shadow-[0_0_15px_rgba(0,240,255,0.2)]"
+    : "bg-cmCyan text-black hover:bg-white hover:text-black shadow-[0_0_20px_rgba(0,240,255,0.4)] hover:shadow-[0_0_30px_rgba(255,255,255,0.6)]";
+
+  return (
+    <motion.button
+      type={type}
+      ref={ref} onClick={onClick} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}
+      style={{ x: springX, y: springY }} whileTap={{ scale: 0.95 }}
+      className={`${baseStyle} ${colorStyle} ${className}`}
+    >
+      <span className="relative z-10 flex items-center gap-2">{children}</span>
+    </motion.button>
+  );
+}
+
+function Navbar() {
+  return (
+    <div className="fixed top-0 left-0 right-0 z-50 flex justify-center border-b border-white/5 bg-black/50 backdrop-blur-xl">
+      <nav className="flex items-center justify-between px-6 py-4 w-full max-w-[1600px] text-foreground">
+        <div className="text-2xl font-black tracking-tighter flex items-center gap-2 uppercase">
+           <i className="ph-fill ph-hexagon text-cmCyan"></i>
+           <span>MP_INFO</span>
+        </div>
+        <div className="hidden md:flex gap-10 text-xs font-bold tracking-widest uppercase opacity-70">
+          <a href="#services" className="hover:text-cmCyan hover:opacity-100 transition-colors">Serviços</a>
+          <a href="#about" className="hover:text-cmCyan hover:opacity-100 transition-colors">Sobre</a>
+          <a href="#testimonials" className="hover:text-cmCyan hover:opacity-100 transition-colors">Avaliações</a>
+        </div>
+        <a href="https://wa.me/5511950263277" target="_blank" rel="noreferrer" className="text-xs font-bold uppercase tracking-widest text-cmCyan flex items-center gap-2 hover:text-white transition-colors">
+          <i className="ph-fill ph-whatsapp-logo text-xl"></i> Fale Conosco
+        </a>
+      </nav>
+    </div>
+  );
+}
+
+function Hero() {
+  return (
+    <section className="relative h-[100dvh] w-full flex items-center justify-center overflow-hidden bg-black">
+      {/* Background Video - Zero Lag approach: Autoplay loop normal, NO SCROLLTrigger */}
+      <video 
+        src="hf_20260325_175128_dbcd74ec-2210-47b3-894b-f8912fb74712.mp4"
+        className="absolute inset-0 w-full h-full object-cover opacity-60"
+        autoPlay
+        loop
+        muted
+        playsInline
+      />
+      {/* Heavy gradients to blend video into the dark futuristic theme */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent"></div>
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background"></div>
+      
+      {/* Glowing atmospheric orb */}
+      <div className="absolute top-1/4 right-1/4 w-[600px] h-[600px] bg-cmPurple/20 rounded-full blur-[120px] pointer-events-none mix-blend-screen"></div>
+      <div className="absolute bottom-1/4 left-1/4 w-[400px] h-[400px] bg-cmCyan/10 rounded-full blur-[100px] pointer-events-none mix-blend-screen"></div>
+
+      <div className="relative z-10 w-full px-4 md:px-12 max-w-[1600px] mx-auto flex flex-col items-start justify-center text-white pb-16">
+        <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ ...SPRING_CFG, delay: 0.2 }}>
+          
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-[2px] bg-cmCyan"></div>
+            <div className="uppercase tracking-[0.3em] text-cmCyan font-bold text-xs font-mono">
+              Alta Performance Habilitada
+            </div>
+          </div>
+          
+          <h1 className="text-6xl md:text-8xl lg:text-[7.5rem] font-black uppercase leading-[0.9] mb-8 tracking-tighter">
+            Potência <br/>
+            <span className="gradient-heading">Absoluta.</span>
+          </h1>
+          
+          <p className="text-lg md:text-xl text-slate-300 max-w-[50ch] leading-relaxed mb-10 font-medium">
+            Seu computador lento ou com problemas? Nós redefinimos a palavra performance. Manutenção, formatação e montagem de máquinas extremas para trabalho e jogos.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-6 mt-8">
+             <CMAccentButton onClick={() => window.open('https://wa.me/5511950263277', '_blank')}>
+               <i className="ph-fill ph-whatsapp-logo text-lg"></i> Chamar no WhatsApp
+             </CMAccentButton>
+             <CMAccentButton outline={true} onClick={() => window.location.href='#services'}>
+               Ver Serviços
+             </CMAccentButton>
+          </div>
+
+        </motion.div>
+      </div>
+
+      <div className="absolute bottom-12 left-12 flex items-center gap-4 text-white/40 font-mono text-xs uppercase tracking-widest hidden md:flex">
+         <div className="w-[1px] h-12 bg-white/20"></div>
+         <p>Scroll to Explore<br/>Hardware Labs</p>
+      </div>
+    </section>
+  );
+}
+
+const ServiceCard = ({ icon, title, desc }) => (
+  <motion.div whileHover={{ y: -5 }} className="cm-glass p-8 flex flex-col gap-6 group rounded-2xl transition-all duration-300 cursor-default relative overflow-hidden">
+    <div className="absolute top-0 right-0 w-32 h-32 bg-cmCyan/5 rounded-full blur-3xl group-hover:bg-cmCyan/10 transition-colors"></div>
+    <i className={`${icon} text-4xl text-cmCyan drop-shadow-[0_0_10px_rgba(0,240,255,0.5)]`}></i>
+    <div>
+      <h3 className="text-xl font-bold uppercase tracking-tight mb-3 text-white">{title}</h3>
+      <p className="text-sm text-slate-400 leading-relaxed">{desc}</p>
+    </div>
+  </motion.div>
+);
+
+function Services() {
+  return (
+    <section id="services" className="py-24 md:py-32 px-4 md:px-12 max-w-[1600px] mx-auto relative">
+      <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
+        <div>
+          <h2 className="text-4xl md:text-5xl uppercase font-black tracking-tighter mb-4 text-glow">Serviços Especializados</h2>
+          <p className="text-slate-400 text-lg max-w-2xl font-mono">Trazemos a temperatura térmica de volta ao ideal. Maximizamos os FPS e erradicamos lentidões do SO.</p>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <ServiceCard icon="ph-bold ph-wrench" title="Manutenção Geral" desc="Diagnóstico minucioso e solução de problemas para computadores e notebooks." />
+        <ServiceCard icon="ph-bold ph-hard-drives" title="Formatação e Instalação" desc="Sistema operacional renovado, computador mais rápido e 100% livre de erros." />
+        <ServiceCard icon="ph-bold ph-microsoft-word-logo" title="Pacote Office" desc="Word, Excel, PowerPoint instalados, ativados e otimizados para produtividade." />
+        <ServiceCard icon="ph-bold ph-wind" title="Limpeza Interna" desc="Remoção profunda de poeira e troca de pasta térmica de alto rendimento (Thermal Grizzly/Arctic)." />
+        <ServiceCard icon="ph-bold ph-cpu" title="Montagem de PCs" desc="Cable management perfeito, air flow planejado. Máquinas montadas peça a peça para entusiastas." />
+        <ServiceCard icon="ph-bold ph-shield-check" title="Remoção de Vírus" desc="Varredura de baixo nível para remover malwares, roubos de dados e ransomwares escondidos." />
+      </div>
+    </section>
+  );
+}
+
+function Differentials() {
+  return (
+    <section className="py-24 px-4 md:px-12 bg-[#08080a] my-12 max-w-[1600px] mx-auto border-y border-white/5 relative overflow-hidden">
+      {/* Tech grid background */}
+      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
+      
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+         <div>
+            <div className="uppercase tracking-[0.2em] text-cmCyan font-bold text-xs mb-4 font-mono">O Padrão Ouro</div>
+            <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter mb-6 leading-tight">Engenharia de<br/> <span className="text-cmCyan">Verdade</span>.</h2>
+            <p className="text-slate-400 text-lg mb-8 max-w-md leading-relaxed">Não damos "jeitinhos". Trabalhamos com laboratório antiestático, testes de benchmark sintéticos e transparência de peças. O seu setup é sagrado.</p>
+            <CMAccentButton outline={true} className="w-fit">Falar com Especialista</CMAccentButton>
+         </div>
+         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="cm-glass p-6 rounded-xl hover:border-cmPurple/50 transition-colors">
+               <h4 className="font-bold uppercase text-lg mb-2 text-white">Velocidade</h4>
+               <p className="text-sm text-slate-400">Atendimento ágil, sem enrolação e resolução focada no curto prazo.</p>
+            </div>
+            <div className="cm-glass p-6 rounded-xl hover:border-cmPurple/50 transition-colors">
+               <h4 className="font-bold uppercase text-lg mb-2 text-white">Preço Justo</h4>
+               <p className="text-sm text-slate-400">Orçamentos coerentes baseados exclusivamente nos problemas reais do hardware.</p>
+            </div>
+            <div className="cm-glass p-6 rounded-xl hover:border-cmPurple/50 transition-colors">
+               <h4 className="font-bold uppercase text-lg mb-2 text-white">Transparência</h4>
+               <p className="text-sm text-slate-400">Você sabe cada software rodado, cada peça limpa e cada cabo invertido.</p>
+            </div>
+            <div className="cm-glass p-6 rounded-xl hover:border-cmPurple/50 transition-colors">
+               <h4 className="font-bold uppercase text-lg mb-2 text-white">Garantia Absoluta</h4>
+               <p className="text-sm text-slate-400">Estressamos todas as peças e emitimos certificado de que o sistema não quebrará sob uso.</p>
+            </div>
+         </div>
+      </div>
+    </section>
+  );
+}
+
+function About() {
+  return (
+    <section id="about" className="py-24 md:py-32 px-4 md:px-12 max-w-[1600px] mx-auto flex flex-col lg:flex-row gap-16 items-center">
+      <div className="flex-1 w-full order-2 lg:order-1 relative">
+         {/* Gamer style skewed images */}
+         <div className="grid grid-cols-2 gap-4 -skew-y-3 transform hover:skew-y-0 transition-transform duration-700 ease-out">
+            <div className="rounded-xl overflow-hidden border-2 border-cmCyan/20 shadow-[0_0_50px_rgba(0,240,255,0.1)] aspect-[3/4]">
+               <img src="https://images.unsplash.com/photo-1593640408182-31c70c8268f5?auto=format&fit=crop&w=800" className="w-full h-full object-cover grayscale mix-blend-luminosity hover:mix-blend-normal hover:grayscale-0 transition-all duration-500" alt="Notebook maintenance"/>
+            </div>
+            <div className="rounded-xl overflow-hidden border-2 border-cmPurple/20 shadow-[0_0_50px_rgba(138,43,226,0.1)] aspect-[3/4] translate-y-12">
+               <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800" className="w-full h-full object-cover grayscale mix-blend-luminosity hover:mix-blend-normal hover:grayscale-0 transition-all duration-500" alt="GPU fixing"/>
+            </div>
+         </div>
+      </div>
+      <div className="flex-1 w-full order-1 lg:order-2">
+         <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter mb-6">A <span className="text-cmCyan">MP Informática</span></h2>
+         <p className="text-slate-400 text-lg leading-relaxed mb-6 font-medium">
+            Especializada em manutenção e suporte técnico hardcore, nós oferecemos soluções rápidas e eficientes para master-races (desktops) e notebooks focados em alta demanda.
+         </p>
+         <p className="text-slate-400 text-lg leading-relaxed mb-10 font-medium">
+            O nosso principal objetivo: <strong>garantir que o seu equipamento entregue o seu máximo desempenho (clock) e opere nas menores temperaturas possíveis</strong>, blindando contra crashes do Windows.
+         </p>
+         <div className="flex gap-12 border-t border-white/10 pt-8">
+            <div>
+               <div className="text-4xl font-black text-white mb-2 tracking-tighter">+500</div>
+               <div className="text-xs text-cmCyan font-mono uppercase tracking-widest">Maquinas Otimizadas</div>
+            </div>
+            <div>
+               <div className="text-4xl font-black text-white mb-2 tracking-tighter">100%</div>
+               <div className="text-xs text-cmCyan font-mono uppercase tracking-widest">Transparência Peças</div>
+            </div>
+         </div>
+      </div>
+    </section>
+  );
+}
+
+const ReviewCard = ({ name, tag, review }) => (
+  <div className="cm-glass p-8 rounded-xl border-l-[3px] border-l-cmCyan flex flex-col justify-between">
+     <div>
+       <div className="flex gap-1 mb-6 text-xl">
+         {[1,2,3,4,5].map(i => <i key={i} className="ph-fill ph-star text-cmCyan drop-shadow-[0_0_8px_rgba(0,240,255,0.8)]"></i>)}
+       </div>
+       <p className="text-slate-300 mb-8 italic leading-relaxed text-sm">"{review}"</p>
+     </div>
+     <div className="flex items-center gap-4">
+        <div className="w-12 h-12 rounded-full bg-[#111] border border-white/10 flex items-center justify-center font-black text-white shadow-inner">
+           {name.charAt(0)}
+        </div>
+        <div>
+           <h5 className="font-bold text-white uppercase text-sm tracking-wide">{name}</h5>
+           <span className="text-xs font-mono text-cmCyan/80">{tag}</span>
+        </div>
+     </div>
+  </div>
+);
+
+function Testimonials() {
+  return (
+    <section id="testimonials" className="py-24 px-4 md:px-12 max-w-[1600px] mx-auto bg-[#060608] border border-white/5 rounded-3xl my-12 shadow-[0_40px_100px_rgba(0,0,0,0.5)]">
+      <div className="mb-16 text-center">
+        <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter mb-4">Clientes Otimizados</h2>
+        <p className="text-slate-400 text-lg font-mono">Reviews de parceiros que resgataram seus setups conosco.</p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <ReviewCard name="Carlos Mendes" tag="Reparo de Emergência" review="Meu notebook do trabalho parou do nada. A MP Informática resolveu o problema no mesmo dia. Rapidez absurda e serviço impecável! Salvou meu home office." />
+        <ReviewCard name="Amanda Nogueira" tag="Confiança Extrema" review="Finalmente uma assistência técnica que não tenta empurrar peças que você não precisa. Foram muito transparentes no diagnóstico do meu PC. Confiança total neles." />
+        <ReviewCard name="Rodrigo Silva" tag="Setup Thermal Repaste" review="Meu PC gamer estava aquecendo muito e desligando no meio das raids. Fizeram uma limpeza interna e troca de pasta fenomenal. As fans nem ativam mais!" />
+      </div>
+    </section>
+  );
+}
+
+function Contact() {
+  const [form, setForm] = useState({
+    name: '',
+    phone: '',
+    issue: ''
+  });
+
+  const handleSupportRequest = (e) => {
+    e.preventDefault();
+    if(!form.name || !form.issue) return;
+
+    const message = `*🔧 NOVO CHAMADO DE SUPORTE*\n\n*Nome:* ${form.name}\n*Contato Retorno:* ${form.phone || 'Não informado'}\n\n*Relatório de Falhas:*\n${form.issue}`;
+    const url = `https://wa.me/5511950263277?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+  };
+
+  return (
+    <section id="contact" className="py-24 md:py-32 px-4 md:px-12 max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+       <div className="sticky top-32">
+         <div className="uppercase tracking-[0.2em] text-cmCyan font-bold text-xs mb-4 font-mono">Suporte Técnico</div>
+         <h2 className="text-5xl md:text-6xl font-black uppercase tracking-tighter mb-6 leading-tight">Inicie Seu<br/> <span className="text-glow">Upgrade.</span></h2>
+         <p className="text-slate-400 text-lg leading-relaxed mb-12">Entre em contato para um diagnóstico assertivo. Preencha o formulário e nossa equipe avaliará seu log de erros, ou chame diretamente no WhatsApp.</p>
+         
+         <div className="flex flex-col gap-8 mb-12">
+            <a href="https://wa.me/5511950263277" target="_blank" rel="noreferrer" className="flex items-center gap-6 group cursor-pointer block">
+               <div className="w-16 h-16 rounded-xl bg-[#0a0a0c] border border-white/10 flex items-center justify-center group-hover:border-cmCyan group-hover:shadow-[0_0_20px_rgba(0,240,255,0.2)] transition-all">
+                  <i className="ph-fill ph-whatsapp-logo text-3xl text-cmCyan group-hover:scale-110 transition-transform"></i>
+               </div>
+               <div>
+                  <div className="text-xs text-slate-500 font-mono uppercase tracking-widest mb-1 group-hover:text-cmCyan/50 transition-colors">Linha Direta WPP</div>
+                  <div className="font-black text-2xl text-white tracking-widest">(11) 95026-3277</div>
+               </div>
+            </a>
+            <a href="https://www.instagram.com/mp.infoti/" target="_blank" rel="noreferrer" className="flex items-center gap-6 group cursor-pointer block">
+               <div className="w-16 h-16 rounded-xl bg-[#0a0a0c] border border-white/10 flex items-center justify-center group-hover:border-[#E1306C] group-hover:shadow-[0_0_20px_rgba(225,48,108,0.2)] transition-all">
+                  <i className="ph-fill ph-instagram-logo text-3xl text-slate-300 group-hover:text-[#E1306C] group-hover:scale-110 transition-transform"></i>
+               </div>
+               <div>
+                  <div className="text-xs text-slate-500 font-mono uppercase tracking-widest mb-1">Instagram</div>
+                  <div className="font-black text-2xl text-white tracking-widest">@MP.INFOTI</div>
+               </div>
+            </a>
+         </div>
+       </div>
+       
+       <div className="cm-glass p-8 md:p-12 rounded-2xl relative">
+         <div className="absolute -top-4 -right-4 w-24 h-24 bg-cmPurple/20 rounded-full blur-2xl pointer-events-none"></div>
+         <h3 className="text-2xl font-black uppercase tracking-wide mb-8 text-white">Console de Retorno</h3>
+         <form onSubmit={handleSupportRequest} className="flex flex-col gap-6 relative z-10">
+            <div className="flex flex-col gap-2">
+               <label className="text-xs font-mono tracking-widest uppercase text-slate-400">Qual seu nome?</label>
+               <input 
+                  type="text" required placeholder="Ex: Master Chief" 
+                  value={form.name} onChange={e => setForm({...form, name: e.target.value})}
+                  className="p-4 rounded-lg bg-[#040405] border border-white/10 focus:outline-none focus:border-cmCyan text-white transition-all font-mono text-sm shadow-inner" 
+               />
+            </div>
+            <div className="flex flex-col gap-2">
+               <label className="text-xs font-mono tracking-widest uppercase text-slate-400">Telefone / WhatsApp</label>
+               <input 
+                  type="text" placeholder="(11) 90000-0000" 
+                  value={form.phone} onChange={e => setForm({...form, phone: e.target.value})}
+                  className="p-4 rounded-lg bg-[#040405] border border-white/10 focus:outline-none focus:border-cmCyan text-white transition-all font-mono text-sm shadow-inner" 
+               />
+            </div>
+            <div className="flex flex-col gap-2">
+               <label className="text-xs font-mono tracking-widest uppercase text-slate-400">Descreva as falhas (Drop FPS, BSOD)</label>
+               <textarea 
+                  rows="5" required placeholder="Descrição técnica do que está ocorrendo..." 
+                  value={form.issue} onChange={e => setForm({...form, issue: e.target.value})}
+                  className="p-4 rounded-lg bg-[#040405] border border-white/10 focus:outline-none focus:border-cmCyan text-white transition-all font-mono text-sm resize-none shadow-inner"
+               ></textarea>
+            </div>
+            <CMAccentButton type="submit" className="mt-4 w-full">Enviar Transmissão <i className="ph-bold ph-paper-plane-right"></i></CMAccentButton>
+         </form>
+       </div>
+    </section>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="border-t border-white/5 bg-black py-16 px-4 md:px-12 mt-12">
+      <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+        <div className="flex items-center gap-2 text-2xl font-black uppercase tracking-tighter text-white">
+          <i className="ph-fill ph-hexagon text-cmCyan"></i> MP_INFO
+        </div>
+        <ul className="flex flex-wrap items-center justify-center gap-6 text-sm font-mono tracking-tight text-slate-500">
+          <li>
+            <a href="https://wa.me/5511950263277" target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:text-cmCyan transition-colors">
+              <i className="ph-fill ph-whatsapp-logo text-lg"></i> (11) 95026-3277
+            </a>
+          </li>
+          <li>
+            <a href="https://www.instagram.com/mp.infoti/" target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:text-[#E1306C] transition-colors">
+               <i className="ph-fill ph-instagram-logo text-lg"></i> @MP.INFOTI
+            </a>
+          </li>
+          <li className="flex items-center gap-2 cursor-pointer hover:text-white transition-colors">
+             <i className="ph-fill ph-map-pin text-lg"></i> São Paulo, SP
+          </li>
+        </ul>
+        <div className="text-xs text-slate-600 font-mono tracking-widest uppercase">
+          © 2026 MP Informática. Built to Dominate.
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+function App() {
+  return (
+    <div className="relative text-base antialiased bg-background">
+      <Navbar />
+      <Hero />
+      <Services />
+      <Differentials />
+      <About />
+      <Testimonials />
+      <Contact />
+      <Footer />
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+    </script>
+  </body>
+</html>
